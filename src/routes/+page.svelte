@@ -52,15 +52,32 @@
 			audioCtx = new AudioContext();
 		}
 
-		const osc = audioCtx.createOscillator();
+		const shepardPhase = ((note % 12) + 12) % 12;
 
-		osc.type = "square";
-		osc.frequency.setValueAtTime(512 * Math.pow(2, note / 12), audioCtx.currentTime);
+		const osc1 = audioCtx.createOscillator();
+		const osc2 = audioCtx.createOscillator();
+		const gain1 = audioCtx.createGain();
+		const gain2 = audioCtx.createGain();
 
-		osc.connect(audioCtx.destination);
-		osc.start();
+		osc1.type = "square";
+		osc2.type = "square";
+		osc1.frequency.setValueAtTime(256 * Math.pow(2, (((note % 12) + 12) % 12) / 12), audioCtx.currentTime);
+		osc2.frequency.setValueAtTime(512 * Math.pow(2, (((note % 12) + 12) % 12) / 12), audioCtx.currentTime);
+		gain1.gain.value = shepardPhase / 12;
+		gain2.gain.value = 1 - (shepardPhase / 12);
 
-		setTimeout(() => osc.disconnect(), 200);
+		osc1.connect(gain1);
+		osc2.connect(gain2);
+		gain1.connect(audioCtx.destination);
+		gain2.connect(audioCtx.destination);
+
+		osc1.start();
+		osc2.start();
+
+		setTimeout(() => {
+			osc1.disconnect();
+			osc2.disconnect();
+		}, 200);
 
 	}
 
@@ -97,8 +114,6 @@
 		}
 
 		const pointermoveListener = (e: PointerEvent) => {
-			console.log(e.clientX);
-
 			if (pointerDown) {
 				let offsetX = e.clientX - pointerLastX;
 				let offsetY = e.clientY - pointerLastY;
@@ -117,8 +132,6 @@
 		}
 
 		const keydownListener = (e: KeyboardEvent) => {
-			console.log(e.code)
-
 			if (e.code === "ArrowLeft") {
 				wheelX = Math.ceil((wheelX - scaleX) / scaleX) * scaleX;
 				return;
