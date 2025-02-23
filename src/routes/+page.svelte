@@ -78,7 +78,6 @@
 			osc1.disconnect();
 			osc2.disconnect();
 		}, 200);
-
 	}
 
 	const keyMap = [
@@ -86,7 +85,7 @@
 		"KeyQ", "KeyW", "KeyE", "KeyR", "KeyT", "KeyY", "KeyU", "KeyI", "KeyO", "KeyP",
 		"KeyA", "KeyS", "KeyD", "KeyF", "KeyG", "KeyH", "KeyJ", "KeyK", "KeyL", "Semicolon",
 		"KeyZ", "KeyX", "KeyC", "KeyV", "KeyB", "KeyN", "KeyM", "Comma", "Period", "Slash",
-	]
+	];
 
 	const keyMapW = 10;
 
@@ -95,23 +94,21 @@
 	let pointerLastY = 0;
 
 	onMount(() => {
-
-		//
 		const wheelListener = (e: WheelEvent) => {
 			wheelX += e.deltaX;
 			wheelY += e.deltaY;
-		}
+		};
 
 		const pointerdownListener = (e: PointerEvent) => {
 			pointerDown = true;
 
 			pointerLastX = e.clientX;
 			pointerLastY = e.clientY;
-		}
+		};
 
 		const pointerupListener = () => {
 			pointerDown = false;
-		}
+		};
 
 		const pointermoveListener = (e: PointerEvent) => {
 			if (pointerDown) {
@@ -124,12 +121,12 @@
 				pointerLastX = e.clientX;
 				pointerLastY = e.clientY;
 			}
-		}
+		};
 
 		const resizeListener = () => {
 			screenW = window.innerWidth;
 			screenH = window.innerHeight;
-		}
+		};
 
 		const keydownListener = (e: KeyboardEvent) => {
 			if (e.code === "ArrowLeft") {
@@ -152,16 +149,15 @@
 				return;
 			}
 
-			let index = keyMap.findIndex(v => v === e.code);
+			let index = keyMap.findIndex((v) => v === e.code);
 
 			if (index === -1) return;
-
 
 			const x = index % keyMapW;
 			const y = index / keyMapW | 0;
 
 			playNote(map[x + (y * mapW)].note);
-		}
+		};
 
 		addEventListener("wheel", wheelListener);
 		addEventListener("pointerdown", pointerdownListener);
@@ -177,13 +173,11 @@
 			removeEventListener("pointermove", pointermoveListener);
 			removeEventListener("resize", resizeListener);
 			removeEventListener("keydown", keydownListener);
-		}
+		};
 	});
 </script>
 
-<main
-	class="absolute inset-0 bg-zinc-800 text-white select-none touch-none"
->
+<main class="absolute inset-0 bg-zinc-800 text-white select-none touch-none">
 	<!-- <div
 		class="absolute w-8 h-8 bg-red-400"
 		style:left={`${wheelX}px`}
@@ -191,12 +185,16 @@
 	></div> -->
 	<div class="absolute inset-0 overflow-hidden">
 		<div
-			class="absolute"
 			style:left={`${-wheelX}px`}
 			style:top={`${-wheelY}px`}
+			class="absolute"
 		>
-			{#each map as {x, y, note, noteMod} (`${x}-${y}`)}
+			{#each map as { x, y, note, noteMod } (`${x}-${y}`)}
 				<div
+					style:width={`${scaleX}px`}
+					style:height={`${scaleY}px`}
+					style:left={`${x * scaleX}px`}
+					style:top={`${y * scaleY}px`}
 					class={[
 						"absolute border border-zinc-200/20 flex justify-center items-center hover:bg-zinc-700",
 						{
@@ -204,10 +202,6 @@
 							"text-white/50": !whiteKeys.includes(noteMod),
 						},
 					]}
-					style:width={`${scaleX}px`}
-					style:height={`${scaleY}px`}
-					style:left={`${x * scaleX}px`}
-					style:top={`${y * scaleY}px`}
 					onpointerdown={() => playNote(note)}
 				>
 					{labels[noteMod]}
