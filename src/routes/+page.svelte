@@ -96,8 +96,8 @@
 	let pointerLastY = 0;
 
 	function boardOnWheel(e: WheelEvent) {
-		wheelX += e.deltaX;
-		wheelY += e.deltaY;
+		wheelX += !e.shiftKey ? e.deltaX : e.deltaY;
+		wheelY += !e.shiftKey ? e.deltaY : e.deltaX;
 	};
 
 	function boardOnPointerdown(e: PointerEvent) {
