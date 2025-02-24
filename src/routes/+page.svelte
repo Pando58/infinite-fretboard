@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
 	import { onMount } from "svelte";
+	import { Spring } from "svelte/motion";
 
-	let wheelX = $state(0);
-	let wheelY = $state(0);
+	let viewPosition = new Spring({ x: 0, y: 0 });
 
 	const scaleX = 100;
 	const scaleY = 50;
@@ -15,8 +15,8 @@
 	let mapH = $derived(Math.ceil(screenH / scaleY) + 1);
 
 	let map = $derived([...Array(mapW * mapH)].map((_, i) => {
-		let x = i % mapW + Math.floor(wheelX / scaleX);
-		let y = Math.floor(i / mapW) + Math.floor(wheelY / scaleY);
+		let x = i % mapW + Math.floor(viewPosition.current.x / scaleX);
+		let y = Math.floor(i / mapW) + Math.floor(viewPosition.current.y / scaleY);
 		let note = x - (y * 5);
 		let noteMod = ((note % 12) + 12) % 12;
 
@@ -96,8 +96,9 @@
 	let pointerLastY = 0;
 
 	function boardOnWheel(e: WheelEvent) {
-		wheelX += !e.shiftKey ? e.deltaX : e.deltaY;
-		wheelY += !e.shiftKey ? e.deltaY : e.deltaX;
+		viewPosition.target.x += !e.shiftKey ? e.deltaX : e.deltaY;
+		viewPosition.target.y += !e.shiftKey ? e.deltaY : e.deltaX;
+		viewPosition.target = viewPosition.target;
 	};
 
 	function boardOnPointerdown(e: PointerEvent) {
@@ -116,8 +117,9 @@
 			let offsetX = e.clientX - pointerLastX;
 			let offsetY = e.clientY - pointerLastY;
 
-			wheelX -= offsetX;
-			wheelY -= offsetY;
+			viewPosition.target.x -= offsetX;
+			viewPosition.target.y -= offsetY;
+			viewPosition.target = viewPosition.target;
 
 			pointerLastX = e.clientX;
 			pointerLastY = e.clientY;
@@ -132,22 +134,26 @@
 
 		const keydownListener = (e: KeyboardEvent) => {
 			if (e.code === "ArrowLeft") {
-				wheelX = Math.ceil((wheelX - scaleX) / scaleX) * scaleX;
+				viewPosition.target.x = Math.ceil((viewPosition.target.x - scaleX) / scaleX) * scaleX;
+				viewPosition.target = viewPosition.target;
 				return;
 			}
 
 			if (e.code === "ArrowRight") {
-				wheelX = Math.floor((wheelX + scaleX) / scaleX) * scaleX;
+				viewPosition.target.x = Math.floor((viewPosition.target.x + scaleX) / scaleX) * scaleX;
+				viewPosition.target = viewPosition.target;
 				return;
 			}
 
 			if (e.code === "ArrowUp") {
-				wheelY = Math.ceil((wheelY - scaleY) / scaleY) * scaleY;
+				viewPosition.target.y = Math.ceil((viewPosition.target.y - scaleY) / scaleY) * scaleY;
+				viewPosition.target = viewPosition.target;
 				return;
 			}
 
 			if (e.code === "ArrowDown") {
-				wheelY = Math.floor((wheelY + scaleY) / scaleY) * scaleY;
+				viewPosition.target.y = Math.floor((viewPosition.target.y + scaleY) / scaleY) * scaleY;
+				viewPosition.target = viewPosition.target;
 				return;
 			}
 
@@ -180,8 +186,8 @@
 		onwheel={boardOnWheel}
 	>
 		<div
-			style:left={`${-wheelX}px`}
-			style:top={`${-wheelY}px`}
+			style:left={`${-viewPosition.current.x}px`}
+			style:top={`${-viewPosition.current.y}px`}
 			class="absolute"
 		>
 			{#each map as { x, y, note, noteMod } (`${x}-${y}`)}
