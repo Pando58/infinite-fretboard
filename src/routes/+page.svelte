@@ -45,6 +45,8 @@
 
 	const whiteKeys = [0, 2, 4, 5, 7, 9, 11];
 
+	let dragging = $state(false);
+
 	let audioCtx: AudioContext | null = null;
 
 	function playNote(note: number) {
@@ -93,36 +95,36 @@
 	let pointerLastX = 0;
 	let pointerLastY = 0;
 
-	onMount(() => {
-		const wheelListener = (e: WheelEvent) => {
-			wheelX += e.deltaX;
-			wheelY += e.deltaY;
-		};
+	function boardOnWheel(e: WheelEvent) {
+		wheelX += e.deltaX;
+		wheelY += e.deltaY;
+	};
 
-		const pointerdownListener = (e: PointerEvent) => {
-			pointerDown = true;
+	function boardOnPointerdown(e: PointerEvent) {
+		pointerDown = true;
+
+		pointerLastX = e.clientX;
+		pointerLastY = e.clientY;
+	};
+
+	function boardOnPointerup() {
+		pointerDown = false;
+	};
+
+	function boardOnPointermove(e: PointerEvent) {
+		if (pointerDown && dragging) {
+			let offsetX = e.clientX - pointerLastX;
+			let offsetY = e.clientY - pointerLastY;
+
+			wheelX -= offsetX;
+			wheelY -= offsetY;
 
 			pointerLastX = e.clientX;
 			pointerLastY = e.clientY;
-		};
+		}
+	};
 
-		const pointerupListener = () => {
-			pointerDown = false;
-		};
-
-		const pointermoveListener = (e: PointerEvent) => {
-			if (pointerDown) {
-				let offsetX = e.clientX - pointerLastX;
-				let offsetY = e.clientY - pointerLastY;
-
-				wheelX -= offsetX;
-				wheelY -= offsetY;
-
-				pointerLastX = e.clientX;
-				pointerLastY = e.clientY;
-			}
-		};
-
+	onMount(() => {
 		const resizeListener = () => {
 			screenW = window.innerWidth;
 			screenH = window.innerHeight;
@@ -159,18 +161,10 @@
 			playNote(map[x + (y * mapW)].note);
 		};
 
-		addEventListener("wheel", wheelListener);
-		addEventListener("pointerdown", pointerdownListener);
-		addEventListener("pointerup", pointerupListener);
-		addEventListener("pointermove", pointermoveListener);
 		addEventListener("resize", resizeListener);
 		addEventListener("keydown", keydownListener);
 
 		return () => {
-			removeEventListener("wheel", wheelListener);
-			removeEventListener("pointerdown", pointerdownListener);
-			removeEventListener("pointerup", pointerupListener);
-			removeEventListener("pointermove", pointermoveListener);
 			removeEventListener("resize", resizeListener);
 			removeEventListener("keydown", keydownListener);
 		};
@@ -178,12 +172,13 @@
 </script>
 
 <main class="absolute inset-0 bg-zinc-800 text-white select-none touch-none">
-	<!-- <div
-		class="absolute w-8 h-8 bg-red-400"
-		style:left={`${wheelX}px`}
-		style:top={`${wheelY}px`}
-	></div> -->
-	<div class="absolute inset-0 overflow-hidden">
+	<div
+		class="absolute inset-0 overflow-hidden"
+		onpointerdown={boardOnPointerdown}
+		onpointermove={boardOnPointermove}
+		onpointerup={boardOnPointerup}
+		onwheel={boardOnWheel}
+	>
 		<div
 			style:left={`${-wheelX}px`}
 			style:top={`${-wheelY}px`}
@@ -202,16 +197,29 @@
 							"text-white/50": !whiteKeys.includes(noteMod),
 						},
 					]}
-					onpointerdown={() => playNote(note)}
+					onpointerdown={() => { if (!dragging) playNote(note); }}
 				>
 					{labels[noteMod]}
 				</div>
 			{/each}
 		</div>
 	</div>
-	<div class="absolute left-2 top-2 bg-black/60 px-1.5 py-1 rounded-md">
-		<div>x: {wheelX | 0}</div>
-		<div>y: {wheelY | 0}</div>
-		<!-- <div>{map}</div> -->
+	<div class="absolute left-2 top-2 flex flex-col items-start p-1 bg-black/60 rounded gap-1">
+		<button
+			class="p-1 cursor-pointer"
+			aria-label="toggle dragging"
+			onpointerdown={() => dragging = !dragging}
+		>
+			<svg
+				opacity={dragging ? "1" : "0.4"}
+				viewBox="0 0 32 32"
+				width="24"
+			>
+				<path
+					d="m 16,0 -5,7 h 3 v 7 H 7 v -3 l -7,5 7,5 v -3 h 7 v 7 h -3 l 5,7 5,-7 h -3 v -7 h 7 v 3 l 7,-5 -7,-5 v 3 H 18 V 7 h 3 z"
+					fill="#ffffff"
+				/>
+			</svg>
+		</button>
 	</div>
 </main>
