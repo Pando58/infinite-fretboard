@@ -2,6 +2,8 @@
 	import { browser } from "$app/environment";
 	import { onMount } from "svelte";
 	import { Spring } from "svelte/motion";
+	import * as Tone from "tone";
+	import { Volume, Synth, PolySynth } from "tone";
 
 	let viewPosition = new Spring({ x: 0, y: 0 });
 
@@ -47,39 +49,41 @@
 
 	let dragging = $state(false);
 
-	let audioCtx: AudioContext | null = null;
+	let mainVolume: Volume | null = null;
+	let synth1: PolySynth | null = null;
+	let synth2: PolySynth | null = null;
+
+	function makeSynth() {
+		return new PolySynth(Synth, {
+			oscillator: {
+				type: "square",
+			},
+			envelope: {
+				attack: 0.02,
+				decay: 0.3,
+				sustain: 0,
+				release: 0.02,
+			},
+		});
+	}
 
 	function playNote(note: number) {
-		if (!audioCtx) {
-			audioCtx = new AudioContext();
+		if (!mainVolume) {
+			mainVolume = new Volume(-18).toDestination();
+		}
+		if (!synth1) {
+			synth1 = makeSynth().connect(mainVolume);
+		}
+		if (!synth2) {
+			synth2 = makeSynth().connect(mainVolume);
 		}
 
-		const shepardPhase = ((note % 12) + 12) % 12;
+		note = ((note % 12) + 12) % 12;
 
-		const osc1 = audioCtx.createOscillator();
-		const osc2 = audioCtx.createOscillator();
-		const gain1 = audioCtx.createGain();
-		const gain2 = audioCtx.createGain();
+		const now = Tone.getContext().currentTime;
 
-		osc1.type = "square";
-		osc2.type = "square";
-		osc1.frequency.setValueAtTime(256 * Math.pow(2, (((note % 12) + 12) % 12) / 12), audioCtx.currentTime);
-		osc2.frequency.setValueAtTime(512 * Math.pow(2, (((note % 12) + 12) % 12) / 12), audioCtx.currentTime);
-		gain1.gain.value = shepardPhase / 12;
-		gain2.gain.value = 1 - (shepardPhase / 12);
-
-		osc1.connect(gain1);
-		osc2.connect(gain2);
-		gain1.connect(audioCtx.destination);
-		gain2.connect(audioCtx.destination);
-
-		osc1.start();
-		osc2.start();
-
-		setTimeout(() => {
-			osc1.disconnect();
-			osc2.disconnect();
-		}, 200);
+		synth1.triggerAttackRelease(128 * Math.pow(2, note / 12), "8n", now, note / 12);
+		synth2.triggerAttackRelease(128 * Math.pow(2, (note + 12) / 12), "8n", now, 1 - (note / 12));
 	}
 
 	const keyMap = [
