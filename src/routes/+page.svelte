@@ -96,6 +96,7 @@
 	const keyMapW = 10;
 
 	let pointerDown = false;
+	let middleButtonDown = false;
 	let pointerLastX = 0;
 	let pointerLastY = 0;
 
@@ -106,7 +107,11 @@
 	};
 
 	function boardOnPointerdown(e: PointerEvent) {
-		pointerDown = true;
+		if (e.buttons === 1) {
+			pointerDown = true;
+		} else if (e.buttons === 4) {
+			middleButtonDown = true;
+		}
 
 		pointerLastX = e.clientX;
 		pointerLastY = e.clientY;
@@ -114,10 +119,11 @@
 
 	function boardOnPointerup() {
 		pointerDown = false;
+		middleButtonDown = false;
 	};
 
 	function boardOnPointermove(e: PointerEvent) {
-		if (pointerDown && dragging) {
+		if ((pointerDown && dragging) || middleButtonDown) {
 			let offsetX = e.clientX - pointerLastX;
 			let offsetY = e.clientY - pointerLastY;
 
@@ -207,7 +213,7 @@
 							"text-white/50": !whiteKeys.includes(noteMod),
 						},
 					]}
-					onpointerdown={() => { if (!dragging) playNote(note); }}
+					onpointerdown={(e) => { if (!dragging && e.buttons === 1) playNote(note); }}
 				>
 					{labels[noteMod]}
 				</div>
